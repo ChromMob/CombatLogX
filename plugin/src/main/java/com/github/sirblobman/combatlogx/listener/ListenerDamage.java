@@ -1,5 +1,8 @@
 package com.github.sirblobman.combatlogx.listener;
 
+import com.github.puregero.multilib.MultiLib;
+import com.github.sirblobman.combatlogx.object.MultilibCheckTagObject;
+import com.google.gson.Gson;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -103,7 +106,7 @@ public final class ListenerDamage extends CombatListener {
         return entity;
     }
 
-    private void checkTag(Entity entity, Entity enemy, TagReason tagReason) {
+    public void checkTag(Entity entity, Entity enemy, TagReason tagReason) {
         ICombatLogX plugin = getCombatLogX();
         ICombatManager combatManager = getCombatManager();
         plugin.printDebug("Checking if the entity '" + getName(entity) + "' should be tagged " +

@@ -1,15 +1,10 @@
 package com.github.sirblobman.combatlogx.manager;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.github.puregero.multilib.MultiLib;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
@@ -44,6 +39,8 @@ import com.github.sirblobman.combatlogx.api.object.UntagReason;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 public final class CombatManager extends Manager implements ICombatManager {
     private final Map<UUID, TagInformation> combatMap;
@@ -63,15 +60,38 @@ public final class CombatManager extends Manager implements ICombatManager {
 
         long systemMillis = System.currentTimeMillis();
         long endMillis = (systemMillis + timerMillis);
+
         return tag(player, enemy, tagType, tagReason, endMillis);
     }
 
     @Override
     public boolean tag(Player player, Entity enemy, TagType tagType, TagReason tagReason, long customEndMillis) {
+        return tag(player, enemy, tagType, tagReason, customEndMillis, false);
+    }
+
+    @Override
+    public boolean tag(Player player, Entity enemy, TagType tagType, TagReason tagReason, long customEndMillis, boolean isExternal) {
         Validate.notNull(player, "player must not be null!");
         Validate.notNull(tagType, "tagType must not be null!");
         Validate.notNull(tagReason, "tagReason must not be null!");
         ICombatLogX plugin = getCombatLogX();
+
+        System.out.println("Tagging player with UUID " + player.getUniqueId() + " and reason " + tagReason);
+        if(!isExternal) {
+            if (MultiLib.isExternalPlayer(player) || (enemy instanceof Player && MultiLib.isExternalPlayer((Player) enemy))) {
+                // at least one is not mine, notify other plugins
+                System.out.println("At least one of them is not mine, notiying other plugins...");
+                StringJoiner sj = new StringJoiner(";");
+                sj.add(player.getUniqueId().toString());
+                sj.add(enemy.getUniqueId().toString());
+                sj.add(tagType.name());
+                sj.add(tagReason.name());
+                sj.add(Long.toString(customEndMillis));
+
+                System.out.println("Notify string: " + sj.toString());
+                MultiLib.notify("com.github.sirblobman.combatlogx:tag", sj.toString());
+            }
+        }
 
         if (player.hasMetadata("NPC")) {
             plugin.printDebug("player is an NPC and can't be tagged.");
@@ -116,6 +136,16 @@ public final class CombatManager extends Manager implements ICombatManager {
 
     @Override
     public void untag(Player player, UntagReason untagReason) {
+        untag(player, untagReason, false);
+    }
+
+    @Override
+    public void untag(Player player, UntagReason untagReason, boolean isExternal) {
+        if(!isExternal) {
+            MultiLib.notify("com.github.sirblobman.combatlogx:untag", player.getUniqueId().toString() + ";" + untagReason.name());
+        }
+
+        System.out.println("Untagging " + player.getUniqueId().toString() + " with reason: " + untagReason.name());
         Validate.notNull(player, "player must not be null!");
         Validate.notNull(untagReason, "untagReason must not be null!");
         ICombatLogX plugin = getCombatLogX();

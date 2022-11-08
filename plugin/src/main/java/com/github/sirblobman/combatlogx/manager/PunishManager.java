@@ -3,7 +3,9 @@ package com.github.sirblobman.combatlogx.manager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.StringJoiner;
 
+import com.github.puregero.multilib.MultiLib;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
@@ -51,6 +53,17 @@ public final class PunishManager extends Manager implements IPunishManager {
 
     @Override
     public boolean punish(Player player, UntagReason punishReason, List<Entity> enemyList) {
+        if(MultiLib.isExternalPlayer(player)) {
+            System.out.println("Punishing external player...");
+            StringJoiner sj = new StringJoiner(";");
+            sj.add(player.getUniqueId().toString());
+            sj.add(punishReason.name());
+
+            MultiLib.notify("com.github.sirblobman.combatlogx:punish", sj.toString());
+
+            //return true;
+        }
+
         PlayerPunishEvent punishEvent = new PlayerPunishEvent(player, punishReason, enemyList);
         PluginManager pluginManager = Bukkit.getPluginManager();
         pluginManager.callEvent(punishEvent);

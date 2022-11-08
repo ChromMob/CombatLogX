@@ -147,10 +147,6 @@ public abstract class CombatListener implements Listener {
     }
 
     protected void printDebug(String message) {
-        if (isDebugModeDisabled()) {
-            return;
-        }
-
         Class<?> thisClass = getClass();
         String className = thisClass.getSimpleName();
         String logMessage = String.format(Locale.US, "[Debug] [%s] %s", className, message);

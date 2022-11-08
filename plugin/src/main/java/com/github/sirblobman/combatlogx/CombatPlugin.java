@@ -2,9 +2,14 @@ package com.github.sirblobman.combatlogx;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.github.puregero.multilib.MultiLib;
+import com.github.sirblobman.combatlogx.api.object.TagReason;
+import com.github.sirblobman.combatlogx.api.object.TagType;
+import com.github.sirblobman.combatlogx.listener.*;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -37,12 +42,6 @@ import com.github.sirblobman.combatlogx.command.CommandCombatTimer;
 import com.github.sirblobman.combatlogx.command.CommandTogglePVP;
 import com.github.sirblobman.combatlogx.command.combatlogx.CommandCombatLogX;
 import com.github.sirblobman.combatlogx.configuration.ConfigurationChecker;
-import com.github.sirblobman.combatlogx.listener.ListenerConfiguration;
-import com.github.sirblobman.combatlogx.listener.ListenerDamage;
-import com.github.sirblobman.combatlogx.listener.ListenerDeath;
-import com.github.sirblobman.combatlogx.listener.ListenerInvulnerable;
-import com.github.sirblobman.combatlogx.listener.ListenerPunish;
-import com.github.sirblobman.combatlogx.listener.ListenerUntag;
 import com.github.sirblobman.combatlogx.manager.CombatManager;
 import com.github.sirblobman.combatlogx.manager.DeathManager;
 import com.github.sirblobman.combatlogx.manager.PlaceholderManager;
@@ -102,6 +101,8 @@ public final class CombatPlugin extends ConfigurablePlugin implements ICombatLog
 
         broadcastEnableMessage();
         registerbStats();
+
+        registerMultilib();
     }
 
     @Override
@@ -227,7 +228,7 @@ public final class CombatPlugin extends ConfigurablePlugin implements ICombatLog
     @Override
     public void printDebug(String... messageArray) {
         if (isDebugModeDisabled()) {
-            return;
+            //return;
         }
 
         Logger logger = getLogger();
@@ -340,6 +341,130 @@ public final class CombatPlugin extends ConfigurablePlugin implements ICombatLog
     private void registerbStats() {
         Metrics metrics = new Metrics(this, 16090);
         metrics.addCustomChart(new SimplePie("selected_language", this::getDefaultLanguageCode));
+    }
+
+    private void registerMultilib() {
+        MultiLib.onString(this, "com.github.sirblobman.combatlogx:checkTag", data -> {
+            /*
+            System.out.println("Data: " + data);
+
+            String[] args = data.split(";");
+            String entityUuid = args[0];
+            String enemyUuid = args[1];
+            TagReason reason = TagReason.valueOf(args[2]);
+
+            System.out.println("Entity UUID: " + entityUuid);
+            System.out.println("Enemy UUID: " + enemyUuid);
+
+            Player entity = MultiLib.getLocalOnlinePlayers().stream().filter(p -> {
+                System.out.println("Entity player UUID: " + p.getUniqueId().toString());
+                return p.getUniqueId().toString().equals(entityUuid);
+            }).findFirst().orElse(null);
+
+            Player enemy = MultiLib.getAllOnlinePlayers().stream().filter(p -> {
+                System.out.println("Enemy player UUID: " + p.getUniqueId().toString());
+               return p.getUniqueId().toString().equals(enemyUuid);
+            }).findFirst().orElse(null);
+
+            if(entity == null) { //player is not mine, do nothing
+                return;
+            }
+
+            System.out.println("enemy is not null");
+
+            ListenerUtils.INSTANCE.checkTag(this, getCombatManager(),entity, enemy, reason);
+            */
+        });
+
+        MultiLib.onString(this, "com.github.sirblobman.combatlogx:stopTracking", data -> {
+            /*
+            Player entity = MultiLib.getLocalOnlinePlayers().stream().filter(p -> p.getUniqueId().toString().equals(data)).findFirst().orElse(null);
+
+            System.out.println("Notify received");
+            if(entity == null) {
+                return;
+            }
+
+            System.out.println("Player is on my server, stoping tracking of UUID " + entity.getUniqueId());
+
+            getDeathManager().stopTracking(entity);
+            */
+        });
+
+        MultiLib.onString(this, "com.github.sirblobman.combatlogx:punish", data -> {
+            /*
+            System.out.println("Punish data: " + data);
+
+            String[] args = data.split(";");
+            UntagReason reason = UntagReason.valueOf(args[1]);
+
+            Player player = MultiLib.getLocalOnlinePlayers().stream().filter(p -> {
+                System.out.println("Entity player UUID: " + p.getUniqueId().toString());
+                return p.getUniqueId().toString().equals(args[0]);
+            }).findFirst().orElse(null);
+
+            if(player == null) {
+                return;
+            }
+
+            getPunishManager().punish(player, reason, getDeathManager().getTrackedEnemies(player));
+             */
+        });
+
+        MultiLib.onString(this, "com.github.sirblobman.combatlogx:tag", data -> {
+            // Player player, Entity enemy, TagType tagType, TagReason tagReason, long customEndMillis
+            String[] args = data.split(";");
+
+            Player player = MultiLib.getAllOnlinePlayers().stream().filter(p -> p.getUniqueId().toString().equals(args[0])).findFirst().orElse(null);
+            Player enemy = MultiLib.getAllOnlinePlayers().stream().filter(p -> p.getUniqueId().toString().equals(args[1])).findFirst().orElse(null);
+
+            // if ANY of the players is on my server, tag them locally
+            if(MultiLib.isExternalPlayer(player) && MultiLib.isExternalPlayer(enemy)) {
+                return; // not mine!
+            }
+
+            TagType tagType = TagType.valueOf(args[2]);
+            TagReason tagReason = TagReason.valueOf(args[3]);
+            long customEndMillis = Long.parseLong(args[4]);
+
+            getCombatManager().tag(player, enemy, tagType, tagReason, customEndMillis, true);
+        });
+
+        MultiLib.onString(this, "com.github.sirblobman.combatlogx:untag", data -> {
+            //Player player, UntagReason untagReason
+            String[] args = data.split(";");
+
+            System.out.println("Received untag with string: " + data);
+
+            StringJoiner sj = new StringJoiner(" | ");
+            getCombatManager().getPlayersInCombat().stream().forEach(p -> {
+                sj.add(p.getName() + " / " + p.getUniqueId());
+            });
+
+            System.out.println("Current players in combat: " + sj.toString());
+
+            Player player = MultiLib.getAllOnlinePlayers().stream().filter(p -> p.getUniqueId().toString().equals(args[0])).findFirst().orElse(null);
+            if(player == null) {
+                System.out.println("Player is null, trying to get tagged...");
+                // player can be just not connected, we can try searching all tagged players
+                player = getCombatManager().getPlayersInCombat().stream().filter(p -> p.getUniqueId().toString().equals(args[0])).findFirst().orElse(null);
+
+                if(player == null) {
+                    System.out.println("Players is still null. Quitting");
+                    return;
+                }
+            }
+
+            UntagReason untagReason = UntagReason.valueOf(args[1]);
+            getCombatManager().untag(player, untagReason, true);
+
+            StringJoiner joiner = new StringJoiner(" | ");
+            getCombatManager().getPlayersInCombat().stream().forEach(p -> {
+                joiner.add(p.getName() + " / " + p.getUniqueId());
+            });
+
+            System.out.println("Players in combat after untag: " + joiner);
+        });
     }
 
     private String getDefaultLanguageCode() {

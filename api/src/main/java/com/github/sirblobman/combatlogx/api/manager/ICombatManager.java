@@ -41,6 +41,8 @@ public interface ICombatManager extends ICombatLogXNeeded {
      */
     boolean tag(Player player, Entity enemy, TagType tagType, TagReason tagReason, long customEndMillis);
 
+    boolean tag(Player player, Entity enemy, TagType tagType, TagReason tagReason, long customEndMillis, boolean isExternal);
+
     /**
      * Remove a player from combat with all enemies.
      *
@@ -48,6 +50,14 @@ public interface ICombatManager extends ICombatLogXNeeded {
      * @param untagReason The reason for removing the player. Usually {@link UntagReason#EXPIRE}
      */
     void untag(Player player, UntagReason untagReason);
+
+    /**
+     * Remove a player from combat with all enemies.
+     *
+     * @param player      The {@link Player} to remove.
+     * @param untagReason The reason for removing the player. Usually {@link UntagReason#EXPIRE}
+     */
+    void untag(Player player, UntagReason untagReason, boolean isExternal);
 
     /**
      * Remove a player from combat with a specific enemy.

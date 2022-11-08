@@ -10,11 +10,15 @@ repositories {
         name = "placeholderapi"
         url = uri("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     }
+    maven {
+        url = uri("https://repo.clojars.org/")
+    }
 }
 
 dependencies {
     implementation(project(":api"))
     implementation("org.zeroturnaround:zt-zip:1.15")
+    implementation("com.github.puregero:multilib:1.1.8")
     compileOnly("me.clip:placeholderapi:2.11.2")
 }
 
@@ -29,6 +33,7 @@ tasks {
 
         relocate("org.zeroturnaround.zip", "com.github.sirblobman.combatlogx.zip")
         relocate("org.slf4j", "com.github.sirblobman.combatlogx.zip.slf4j")
+        relocate("com.github.puregero.multilib", "com.github.sirblobman.combatlogx.multilib")
     }
 
     build {

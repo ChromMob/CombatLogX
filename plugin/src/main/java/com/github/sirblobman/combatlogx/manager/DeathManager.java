@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.github.puregero.multilib.MultiLib;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -37,9 +38,16 @@ public final class DeathManager extends Manager implements IDeathManager {
 
     @Override
     public boolean stopTracking(Player player) {
+        if(MultiLib.isExternalPlayer(player)) {
+            System.out.println("Player is not external, notifying...");
+            MultiLib.notify("com.github.sirblobman.combatlogx:stopTracking", player.getUniqueId().toString());
+            return true;
+        }
+
         UUID playerId = player.getUniqueId();
         boolean contained = this.killedPlayerMap.containsKey(playerId);
         this.killedPlayerMap.remove(playerId);
+        System.out.println("Stopping tracking with result " + contained);
         return contained;
     }
 
